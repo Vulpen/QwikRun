@@ -14,20 +14,18 @@ const int MAX_PATH_SIZE = 30;
 std::string GetExeDirectory() {
 	char path[MAX_PATH_SIZE];
 	GetModuleFileName(NULL, path, MAX_PATH_SIZE);
-	std::cout << path << std::endl;
 	return path;
 }
 
 ///Representation of entries in the file format. So far, it is just alias/npath/n
 class App {
 public:
-	//std::vector<std::string> Aliases;
 	std::string Alias;
 	std::string Path;
 };
 
 ///Fills the apps array with all entries in the FILENAME file
-void ReadAppsFromFile(std::vector<App*> *apps) {
+void ReadAppsFromFile(std::vector<App*> *apps, std::string RegistryFileLocation) {
 	
 	if (apps == NULL) {
 		return;
@@ -37,7 +35,7 @@ void ReadAppsFromFile(std::vector<App*> *apps) {
 	}
 
 	std::ifstream readstream;
-	readstream.open(FILENAME);
+	readstream.open(RegistryFileLocation);
 	if (readstream.is_open()) {
 		std::string str;
 		App *temp;
@@ -76,11 +74,18 @@ void RunByAlias(std::vector<App*> *apps, std::string DesiredAlias) {
 }
 
 int main(int argc, char **argv) {
+	///This will contain the directory that the executable is located in
 	std::string ExeDirectory = GetExeDirectory();
-	std::string FullExePath;
-	std::string FullTempPath;
+
+	///The path to the application registry file
+	std::string FullRegPath = ExeDirectory + FILENAME;
+
+	///The path to the file used as a swap to remove applications from the registry file
+	std::string FullTempPath = ExeDirectory + TEMPFILENAME;
+	std::cout << FullRegPath << " " << FullTempPath << std::endl;
 	std::vector<App*> AppsList;
 	
+
 	//It is assumed the number of arguments helps narrow down what the desired action is.
 	//This isn't a good assumption for future features, but fine for what I want.
 	if (argc == 1) {
@@ -94,7 +99,7 @@ int main(int argc, char **argv) {
 		//--- List ---
 		if (ss.str() == "list") {
 			std::cout << "Listing all applications..." << std::endl;
-			ReadAppsFromFile(&AppsList);
+			ReadAppsFromFile(&AppsList, FullRegPath);
 			for (int i = 0; i < AppsList.size(); i++) {
 				std::cout << AppsList[i]->Alias << std::endl;
 			}
@@ -114,9 +119,9 @@ int main(int argc, char **argv) {
 		//--- Config ---
 		else if (ss.str() == "config") {
 			std::cout << "Entering config mode..." << std::endl;
-			ReadAppsFromFile(&AppsList);
+			ReadAppsFromFile(&AppsList, FullRegPath);
 
-			//prompt for add or remove apps
+			///prompt for add or remove apps
 			bool inConfig = true;
 			while (inConfig) {
 				std::cout << "Please enter add, remove, or exit:" << std::endl;
@@ -125,7 +130,7 @@ int main(int argc, char **argv) {
 
 				//--- Add App ---
 				if (input == "add") {
-					//Prompt user for the alias and path for the new app
+					///Prompt user for the alias and path for the new app
 					std::string alias;
 					std::string path;
 					std::cout << "Please enter alias for app:" << std::endl;
@@ -134,15 +139,17 @@ int main(int argc, char **argv) {
 					std::cout << "Please enter the path for the app:" << std::endl;
 					std::getline(std::cin, path);
 
-					//Open the file stream to add the app
+					///Open the file stream to add the app
 					std::ofstream out;
-					out.open(FILENAME, std::ios::app);
+					out.open(FullRegPath, std::ios::app);
 
 					if (out.is_open()) {
 						out << alias << std::endl << path << std::endl;
 					}
 					else {
 						std::cerr << "Was not able to open the out file for writing" << std::endl;
+						out.close();
+						return 0;
 					}
 
 					out.close();
@@ -151,7 +158,7 @@ int main(int argc, char **argv) {
 				//--- Remove App ---
 				else if (input == "remove") {
 					std::string alias;
-					//prompt for alias being removed
+					///prompt for alias being removed
 					std::cout << "enter alias to be removed:" << std::endl;
 					std::cin.ignore();
 					std::getline(std::cin, alias);
@@ -159,21 +166,20 @@ int main(int argc, char **argv) {
 					std::ofstream out;
 					std::ifstream in;
 
-					out.open(TEMPFILENAME);
-					in.open(FILENAME);
+					out.open(FullTempPath);
+					in.open(FullRegPath);
 					int removedEntries = 0;
 
+					///Loop through the registry and write all entries that are being kept to a temp file
 					if (out.is_open() && in.is_open()) {
 						std::string readString;
 						while (!in.eof()) {
 							std::getline(in, readString);
 							if (readString == alias) {
-								//dont write to temp
 								std::getline(in, readString);
 								removedEntries++;
 							}
 							else if (readString != "") {
-								//copy the contents to temp
 								out << readString << std::endl;
 								std::getline(in, readString);
 								out << readString << std::endl;
@@ -185,15 +191,15 @@ int main(int argc, char **argv) {
 						std::cerr << "Was not able to access files for removing the app" << std::endl;
 						in.close();
 						out.close();
-						return 0; // Return so we don't do the remove and rename file ops.
+						return 0; /// Return so we don't do the remove and rename file ops.
 					}
 
 					in.close();
 					out.close();
 					
-					//Swap the temp file for the normal file
-					std::remove(FILENAME.c_str());
-					std::rename(TEMPFILENAME.c_str(), FILENAME.c_str());
+					///Swap the temp file for the normal file
+					std::remove(FullRegPath.c_str());
+					std::rename(FullTempPath.c_str(), FullRegPath.c_str());
 				}
 				else if (input == "exit") {
 					inConfig = false;
@@ -214,7 +220,7 @@ int main(int argc, char **argv) {
 				std::cerr << "No alias entered. Please run by using 'qwk run [ALIAS]'." << std::endl;
 				return 0;
 			}
-			ReadAppsFromFile(&AppsList);
+			ReadAppsFromFile(&AppsList, FullRegPath);
 			RunByAlias(&AppsList, ss.str());
 		}
 	}
