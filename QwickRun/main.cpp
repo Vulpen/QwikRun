@@ -6,12 +6,17 @@
 #include <sstream>
 #include <cstdio>
 
-const std::string FILENAME = "C:\\Program Files\\QwikRun\\qwkapps.txt";
-const std::string TEMPFILENAME = "C:\\Program Files\\QwikRun\\temp.txt";
+const std::string FILENAME = "qwkapps.txt";
+const std::string TEMPFILENAME = "temp.txt";
 
-//Todo:
-//Test aliases containing spaces
-//Test in add alias for duplicate aliases
+const int MAX_PATH_SIZE = 30;
+
+std::string GetExeDirectory() {
+	char path[MAX_PATH_SIZE];
+	GetModuleFileName(NULL, path, MAX_PATH_SIZE);
+	std::cout << path << std::endl;
+	return path;
+}
 
 ///Representation of entries in the file format. So far, it is just alias/npath/n
 class App {
@@ -23,6 +28,7 @@ public:
 
 ///Fills the apps array with all entries in the FILENAME file
 void ReadAppsFromFile(std::vector<App*> *apps) {
+	
 	if (apps == NULL) {
 		return;
 	}
@@ -70,7 +76,9 @@ void RunByAlias(std::vector<App*> *apps, std::string DesiredAlias) {
 }
 
 int main(int argc, char **argv) {
-
+	std::string ExeDirectory = GetExeDirectory();
+	std::string FullExePath;
+	std::string FullTempPath;
 	std::vector<App*> AppsList;
 	
 	//It is assumed the number of arguments helps narrow down what the desired action is.
@@ -221,5 +229,6 @@ int main(int argc, char **argv) {
 	// Config - enters config mode
 	// List - lists all applications
 
+	
 	return 0;
 }
