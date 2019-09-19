@@ -1,0 +1,6 @@
+vscode
+D:\Program Files (x86)\Microsoft VS Code\Code.exe
+chrome
+C:\Program Files (x86)\Google\Chrome\Application\chrome.exe
+notepad
+%windir%\system32\notepad.exe
