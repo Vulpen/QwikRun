@@ -9,12 +9,19 @@
 const std::string FILENAME = "qwkapps.txt";
 const std::string TEMPFILENAME = "temp.txt";
 
-const int MAX_PATH_SIZE = 30;
+const int MAX_PATH_SIZE = 100;
 
 std::string GetExeDirectory() {
 	char path[MAX_PATH_SIZE];
 	GetModuleFileName(NULL, path, MAX_PATH_SIZE);
-	return path;
+
+	///remove the last 7 in the path to get rid of qwk.exe in the path
+	std::string str = path;
+	for (int i = 0; i < 7; i++) {
+		str.pop_back();
+	}
+
+	return str;
 }
 
 ///Representation of entries in the file format. So far, it is just alias/npath/n
