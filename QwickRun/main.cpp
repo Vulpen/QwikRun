@@ -63,6 +63,32 @@ void ReadAppsFromFile(std::vector<App*> *apps, std::string RegistryFileLocation)
 
 }
 
+void AddAppToList(std::vector<App*> *apps, std::string RegistryFileLocation){
+///Prompt user for the alias and path for the new app
+	std::string alias;
+	std::string path;
+	std::cout << "Please enter alias for app:" << std::endl;
+	std::cin.ignore();
+	std::getline(std::cin, alias);
+	std::cout << "Please enter the path for the app:" << std::endl;
+	std::getline(std::cin, path);
+
+	///Open the file stream to add the app
+	std::ofstream out;
+	out.open(RegistryFileLocation, std::ios::app);
+
+	if (out.is_open()) {
+		out << alias << std::endl << path << std::endl;
+	}
+	else {
+		std::cerr << "Was not able to open the out file for writing" << std::endl;
+		out.close();
+	}
+
+	out.close();
+
+}
+
 ///Runs an app from apps given the desired alias.
 void RunByAlias(std::vector<App*> *apps, std::string DesiredAlias) {
 
@@ -137,29 +163,7 @@ int main(int argc, char **argv) {
 
 				//--- Add App ---
 				if (input == "add") {
-					///Prompt user for the alias and path for the new app
-					std::string alias;
-					std::string path;
-					std::cout << "Please enter alias for app:" << std::endl;
-					std::cin.ignore();
-					std::getline(std::cin, alias);
-					std::cout << "Please enter the path for the app:" << std::endl;
-					std::getline(std::cin, path);
-
-					///Open the file stream to add the app
-					std::ofstream out;
-					out.open(FullRegPath, std::ios::app);
-
-					if (out.is_open()) {
-						out << alias << std::endl << path << std::endl;
-					}
-					else {
-						std::cerr << "Was not able to open the out file for writing" << std::endl;
-						out.close();
-						return 0;
-					}
-
-					out.close();
+					AddAppToList(&AppsList, FullRegPath);
 				}
 
 				//--- Remove App ---
